@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const WebSocket = require('./lib/ws');
 
 const port = 3000;
 
@@ -53,6 +54,35 @@ const server = http.createServer((req, res) => {
             res.end(content, 'utf-8');
         }
     });
+});
+
+const wss = new WebSocket.Server({ noServer: true });
+
+server.on('upgrade', (request, socket, head) => {
+  // For now, we'll accept all connections.
+  // In a real application, you might want to check the request path or origin.
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    wss.emit('connection', ws, request);
+  });
+});
+
+wss.on('connection', (ws) => {
+  console.log('Client connected');
+
+  ws.on('message', (data, isBinary) => {
+    console.log(`Received message: ${data}`);
+
+    // Broadcast the message to all other clients.
+    wss.clients.forEach((client) => {
+      if (client !== ws && client.readyState === WebSocket.OPEN) {
+        client.send(data, { binary: isBinary });
+      }
+    });
+  });
+
+  ws.on('close', () => {
+    console.log('Client disconnected');
+  });
 });
 
 server.listen(port, () => {
