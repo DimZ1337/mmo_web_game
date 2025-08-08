@@ -1,0 +1,9 @@
+{
+  "name": "web-mmo",
+  "version": "0.0.1",
+  "description": "A web-based MMO game.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
