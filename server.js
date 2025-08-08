@@ -70,14 +70,21 @@ wss.on('connection', (ws) => {
   console.log('Client connected');
 
   ws.on('message', (data, isBinary) => {
-    console.log(`Received message: ${data}`);
-
-    // Broadcast the message to all other clients.
-    wss.clients.forEach((client) => {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(data, { binary: isBinary });
+    try {
+      const message = JSON.parse(data.toString());
+      if (message.type === 'move') {
+        console.log(`Player moved to (${message.x}, ${message.y})`);
       }
-    });
+    } catch (e) {
+      // Not a JSON message, assume it's a chat message.
+      console.log(`Received chat message: ${data}`);
+      // Broadcast the chat message to all other clients.
+      wss.clients.forEach((client) => {
+        if (client !== ws && client.readyState === WebSocket.OPEN) {
+          client.send(data, { binary: isBinary });
+        }
+      });
+    }
   });
 
   ws.on('close', () => {
